@@ -36,11 +36,16 @@ nano .env
 Edit `.env` and update at minimum:
 
 ```bash
-# Generate a random JWT key (32+ characters):
-# pwgen -s 40 1
+# Generate a random JWT key (32+ characters)
+# Option 1: Using pwgen (install with: apt-get install pwgen or brew install pwgen)
+pwgen -s 40 1
+# Option 2: Using openssl (available on most systems)
+openssl rand -base64 32
+
+# Then set it in .env:
 JWT_PRIVATE_KEY=your_random_40_character_string_here
 
-# MySQL passwords
+# MySQL passwords - use strong, unique passwords
 INIT_SEAFILE_MYSQL_ROOT_PASSWORD=your_secure_root_password
 SEAFILE_MYSQL_DB_PASSWORD=your_secure_seafile_password
 
