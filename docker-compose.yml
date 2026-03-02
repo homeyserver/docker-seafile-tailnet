@@ -58,11 +58,11 @@ services:
       traefik.docker.network: reverse-proxy
       # HTTP router (insecure - redirects to HTTPS)
       traefik.http.routers.seafile-insecure.entrypoints: http
-      traefik.http.routers.seafile-insecure.rule: "Host(`${SEAFILE_SERVER_HOSTNAME}`, `seafile.shoji.me`)"
+      traefik.http.routers.seafile-insecure.rule: "Host(`${SEAFILE_SERVER_HOSTNAME}`)"
       traefik.http.routers.seafile-insecure.middlewares: https-redirectscheme@file
       # HTTPS router (secure)
       traefik.http.routers.seafile.entrypoints: https
-      traefik.http.routers.seafile.rule: "Host(`${SEAFILE_SERVER_HOSTNAME}`, `seafile.shoji.me`)"
+      traefik.http.routers.seafile.rule: "Host(`${SEAFILE_SERVER_HOSTNAME}`)"
       traefik.http.routers.seafile.middlewares: default-headers@file
       traefik.http.routers.seafile.tls: true
       traefik.http.routers.seafile.service: seafile

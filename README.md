@@ -124,7 +124,7 @@ docker compose logs -f
 docker compose logs -f seafile
 
 # All Seafile logs on host
-sudo tail -f $(find /volume1/docker/seafile/seafile-data/ -type f -name *.log 2>/dev/null)
+sudo tail -f $(find /volume1/docker/seafile/seafile-data/ -type f -name '*.log' 2>/dev/null)
 ```
 
 ### Add Admin User
@@ -158,11 +158,12 @@ docker compose down
 The docker-compose.yml includes Traefik labels configured for:
 - HTTP to HTTPS redirect
 - Automatic SSL via your existing Traefik setup
-- Multiple domain support
+- Domain routing via environment variable
 
-Update the Traefik labels in `docker-compose.yml` to match your domains:
+The domain is set via the `SEAFILE_SERVER_HOSTNAME` variable in `.env`. To support multiple domains, you can edit the Traefik labels in `docker-compose.yml`:
 
 ```yaml
+# Example for multiple domains:
 traefik.http.routers.seafile-insecure.rule: "Host(`seafile.shojinas.home.shoji.me`, `seafile.shoji.me`)"
 traefik.http.routers.seafile.rule: "Host(`seafile.shojinas.home.shoji.me`, `seafile.shoji.me`)"
 ```
