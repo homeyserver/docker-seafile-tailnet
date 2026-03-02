@@ -1,0 +1,19 @@
+# Environment variables with sensitive data
+.env
+
+# Docker volumes and data
+seafile-data/
+mysql/
+elasticsearch/
+
+# Backup files
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
