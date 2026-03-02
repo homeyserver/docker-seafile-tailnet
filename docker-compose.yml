@@ -37,6 +37,8 @@ services:
     # Share network namespace with seafile container
     network_mode: "service:seafile"
     restart: unless-stopped
+    profiles:
+      - tailscale
 
   seafile:
     image: seafileltd/seafile-mc:latest

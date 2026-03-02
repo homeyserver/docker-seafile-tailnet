@@ -59,9 +59,13 @@ INIT_SEAFILE_ADMIN_PASSWORD=your_secure_admin_password
 SEAFILE_SERVER_HOSTNAME=seafile.shojinas.home.shoji.me
 
 # Tailscale configuration (optional - see Tailscale Integration section)
-TAILSCALE_ENABLED=true
 TAILSCALE_AUTHKEY=tskey-auth-your-key-here
 TAILSCALE_HOSTNAME=seafile
+```
+
+**Note:** To enable Tailscale, you'll need to use the `--profile tailscale` flag when starting:
+```bash
+docker compose --profile tailscale up -d
 ```
 
 ### 3. (Optional) Tailscale Integration
@@ -75,7 +79,6 @@ If you want to expose Seafile on your Tailscale network (tailnet):
    
 2. **Update .env file:**
    ```bash
-   TAILSCALE_ENABLED=true
    TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxxxxxx
    TAILSCALE_HOSTNAME=seafile
    ```
@@ -84,6 +87,11 @@ If you want to expose Seafile on your Tailscale network (tailnet):
    ```bash
    sudo mkdir -p /volume1/docker/seafile/tailscale
    sudo chown -R 1027:100 /volume1/docker/seafile/tailscale
+   ```
+
+4. **Start with Tailscale profile:**
+   ```bash
+   docker compose --profile tailscale up -d
    ```
 
 The Seafile container will now be accessible on your tailnet at the hostname you specified (e.g., `http://seafile`).
@@ -100,13 +108,17 @@ sudo mkdir -p /volume1/docker/seafile/elasticsearch
 sudo chown -R 1027:100 /volume1/docker/seafile/
 ```
 
-### 5. Start Services
+### 4. Start Services
 
 ```bash
+# Start without Tailscale
 docker compose up -d
+
+# OR start with Tailscale enabled
+docker compose --profile tailscale up -d
 ```
 
-### 6. Monitor Startup
+### 5. Monitor Startup
 
 Watch the initialization process:
 
@@ -128,7 +140,7 @@ Seahub is started
 Done.
 ```
 
-### 7. Access Seafile
+### 6. Access Seafile
 
 Once started, access Seafile at:
 - **Via Traefik (HTTPS):** https://seafile.shojinas.home.shoji.me (or your configured hostname)
@@ -202,23 +214,19 @@ docker exec seafile-tailscale tailscale ip
 
 ### Disable/Enable Tailscale
 
-To temporarily disable Tailscale without removing the container:
+Tailscale uses Docker Compose profiles. To enable or disable it:
 
+**Enable Tailscale:**
 ```bash
-# Stop Tailscale container
+docker compose --profile tailscale up -d
+```
+
+**Disable Tailscale:**
+```bash
+# Stop just the Tailscale container
 docker compose stop tailscale
 
-# Start it again
-docker compose start tailscale
-```
-
-To completely disable Tailscale, set in `.env`:
-```bash
-TAILSCALE_ENABLED=false
-```
-
-Then restart:
-```bash
+# Or restart without the profile
 docker compose up -d
 ```
 
@@ -329,11 +337,12 @@ See `.env.example` for all available configuration options.
 - `INIT_SEAFILE_ADMIN_PASSWORD` - Initial admin password
 
 ### Tailscale Variables:
-- `TAILSCALE_ENABLED` - Set to `true` to enable Tailscale integration
 - `TAILSCALE_AUTHKEY` - Auth key from https://login.tailscale.com/admin/settings/keys
 - `TAILSCALE_HOSTNAME` - Hostname for your Seafile container on the tailnet
 - `TAILSCALE_EXTRA_ARGS` - Additional Tailscale arguments (e.g., `--accept-routes`)
 - `TAILSCALE_STATE_DIR` - Directory to persist Tailscale state
+
+**Note:** Enable Tailscale by starting with: `docker compose --profile tailscale up -d`
 
 ## References
 
