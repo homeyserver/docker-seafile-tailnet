@@ -20,6 +20,40 @@ This setup includes:
 
 ## Quick Start
 
+### Option 1: Using Portainer (Recommended for GUI users)
+
+1. **In Portainer, create a new Stack:**
+   - Go to Stacks → Add Stack
+   - Name it `seafile`
+   - Copy the contents of `docker-compose.yml` into the Web editor
+
+2. **Configure environment variables in Portainer:**
+   - Scroll down to "Environment variables"
+   - Click "Add an environment variable" for each required variable:
+     - `INIT_SEAFILE_MYSQL_ROOT_PASSWORD` - Strong MySQL root password
+     - `SEAFILE_MYSQL_DB_PASSWORD` - Strong MySQL seafile password
+     - `JWT_PRIVATE_KEY` - Generate with: `openssl rand -base64 32`
+     - `SEAFILE_SERVER_HOSTNAME` - Your domain (e.g., `seafile.shoji.me`)
+     - `INIT_SEAFILE_ADMIN_EMAIL` - Admin email
+     - `INIT_SEAFILE_ADMIN_PASSWORD` - Strong admin password
+     - (Optional) `TAILSCALE_AUTHKEY` - From https://login.tailscale.com/admin/settings/keys
+     - (Optional) `TAILSCALE_HOSTNAME` - Hostname on tailnet (e.g., `seafile`)
+
+3. **Create volume directories on your host:**
+   ```bash
+   sudo mkdir -p /volume1/docker/seafile/{seafile-data,mysql,tailscale}
+   sudo chown -R 1027:100 /volume1/docker/seafile/
+   ```
+
+4. **Deploy the stack** in Portainer
+
+5. **Monitor logs** in Portainer to watch initialization
+
+**To disable Tailscale in Portainer:**
+- Simply stop the `seafile-tailscale` container or leave `TAILSCALE_AUTHKEY` empty
+
+### Option 2: Using Docker Compose CLI
+
 ### 1. Clone and Configure
 
 ```bash
@@ -59,13 +93,9 @@ INIT_SEAFILE_ADMIN_PASSWORD=your_secure_admin_password
 SEAFILE_SERVER_HOSTNAME=seafile.shojinas.home.shoji.me
 
 # Tailscale configuration (optional - see Tailscale Integration section)
+# To disable Tailscale: Set TAILSCALE_AUTHKEY to empty or stop container in Portainer
 TAILSCALE_AUTHKEY=tskey-auth-your-key-here
 TAILSCALE_HOSTNAME=seafile
-```
-
-**Note:** To enable Tailscale, you'll need to use the `--profile tailscale` flag when starting:
-```bash
-docker compose --profile tailscale up -d
 ```
 
 ### 3. (Optional) Tailscale Integration
@@ -89,11 +119,6 @@ If you want to expose Seafile on your Tailscale network (tailnet):
    sudo chown -R 1027:100 /volume1/docker/seafile/tailscale
    ```
 
-4. **Start with Tailscale profile:**
-   ```bash
-   docker compose --profile tailscale up -d
-   ```
-
 The Seafile container will now be accessible on your tailnet at the hostname you specified (e.g., `http://seafile`).
 
 ### 4. Create Volume Directories
@@ -108,17 +133,15 @@ sudo mkdir -p /volume1/docker/seafile/elasticsearch
 sudo chown -R 1027:100 /volume1/docker/seafile/
 ```
 
-### 4. Start Services
+### 5. Start Services
 
 ```bash
-# Start without Tailscale
 docker compose up -d
-
-# OR start with Tailscale enabled
-docker compose --profile tailscale up -d
 ```
 
-### 5. Monitor Startup
+**For Portainer users:** Simply create a new stack from this repository and configure the environment variables in the Portainer UI.
+
+### 6. Monitor Startup
 
 Watch the initialization process:
 
@@ -140,7 +163,7 @@ Seahub is started
 Done.
 ```
 
-### 6. Access Seafile
+### 7. Access Seafile
 
 Once started, access Seafile at:
 - **Via Traefik (HTTPS):** https://seafile.shojinas.home.shoji.me (or your configured hostname)
@@ -214,21 +237,23 @@ docker exec seafile-tailscale tailscale ip
 
 ### Disable/Enable Tailscale
 
-Tailscale uses Docker Compose profiles. To enable or disable it:
+**Via Portainer:**
+- Navigate to Containers
+- Find `seafile-tailscale`
+- Click Stop/Start to disable/enable
 
-**Enable Tailscale:**
+**Via Docker Compose:**
 ```bash
-docker compose --profile tailscale up -d
-```
-
-**Disable Tailscale:**
-```bash
-# Stop just the Tailscale container
+# Stop Tailscale
 docker compose stop tailscale
 
-# Or restart without the profile
-docker compose up -d
+# Start Tailscale
+docker compose start tailscale
+
+# Or remove the auth key from .env and restart
 ```
+
+**To permanently disable:** Remove or comment out the `tailscale` service from `docker-compose.yml`.
 
 ### Tailscale Logs
 
@@ -342,7 +367,7 @@ See `.env.example` for all available configuration options.
 - `TAILSCALE_EXTRA_ARGS` - Additional Tailscale arguments (e.g., `--accept-routes`)
 - `TAILSCALE_STATE_DIR` - Directory to persist Tailscale state
 
-**Note:** Enable Tailscale by starting with: `docker compose --profile tailscale up -d`
+**Note:** To disable Tailscale, simply stop the container in Portainer or via `docker compose stop tailscale`
 
 ## References
 
