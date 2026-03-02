@@ -1,6 +1,6 @@
-# Seafile Server with Traefik
+# Seafile Server with Traefik and Tailscale
 
-Docker Compose setup for Seafile Server Community Edition with Traefik reverse proxy integration.
+Docker Compose setup for Seafile Server Community Edition with Traefik reverse proxy and optional Tailscale integration.
 
 ## Overview
 
@@ -9,12 +9,14 @@ This setup includes:
 - **MariaDB** - Database backend
 - **Redis** - Cache service (recommended for Seafile 13+)
 - **Traefik** - Reverse proxy with automatic HTTPS (external)
+- **Tailscale** - Optional VPN integration to expose Seafile on your tailnet
 
 ## Prerequisites
 
 - Docker and Docker Compose installed
 - Traefik reverse proxy running with the `reverse-proxy` network
 - Domain name configured (e.g., `seafile.shoji.me`)
+- (Optional) Tailscale account and auth key for tailnet integration
 
 ## Quick Start
 
@@ -55,9 +57,38 @@ INIT_SEAFILE_ADMIN_PASSWORD=your_secure_admin_password
 
 # Your domain
 SEAFILE_SERVER_HOSTNAME=seafile.shojinas.home.shoji.me
+
+# Tailscale configuration (optional - see Tailscale Integration section)
+TAILSCALE_ENABLED=true
+TAILSCALE_AUTHKEY=tskey-auth-your-key-here
+TAILSCALE_HOSTNAME=seafile
 ```
 
-### 3. Create Volume Directories
+### 3. (Optional) Tailscale Integration
+
+If you want to expose Seafile on your Tailscale network (tailnet):
+
+1. **Get a Tailscale auth key:**
+   - Go to https://login.tailscale.com/admin/settings/keys
+   - Generate a new auth key
+   - Recommended settings: Enable "Reusable" and "Ephemeral"
+   
+2. **Update .env file:**
+   ```bash
+   TAILSCALE_ENABLED=true
+   TAILSCALE_AUTHKEY=tskey-auth-xxxxxxxxxxxxx
+   TAILSCALE_HOSTNAME=seafile
+   ```
+
+3. **Create Tailscale state directory:**
+   ```bash
+   sudo mkdir -p /volume1/docker/seafile/tailscale
+   sudo chown -R 1027:100 /volume1/docker/seafile/tailscale
+   ```
+
+The Seafile container will now be accessible on your tailnet at the hostname you specified (e.g., `http://seafile`).
+
+### 4. Create Volume Directories
 
 ```bash
 # Create the directories for persistent data
@@ -69,13 +100,13 @@ sudo mkdir -p /volume1/docker/seafile/elasticsearch
 sudo chown -R 1027:100 /volume1/docker/seafile/
 ```
 
-### 4. Start Services
+### 5. Start Services
 
 ```bash
 docker compose up -d
 ```
 
-### 5. Monitor Startup
+### 6. Monitor Startup
 
 Watch the initialization process:
 
@@ -97,10 +128,11 @@ Seahub is started
 Done.
 ```
 
-### 6. Access Seafile
+### 7. Access Seafile
 
 Once started, access Seafile at:
-- https://seafile.shojinas.home.shoji.me (or your configured hostname)
+- **Via Traefik (HTTPS):** https://seafile.shojinas.home.shoji.me (or your configured hostname)
+- **Via Tailscale (if enabled):** http://seafile (or your configured Tailscale hostname)
 
 Login with the admin credentials from your `.env` file.
 
@@ -156,7 +188,62 @@ docker compose restart
 docker compose down
 ```
 
+## Tailscale Management
+
+### Check Tailscale Status
+
+```bash
+# View Tailscale status
+docker exec seafile-tailscale tailscale status
+
+# View Tailscale IP address
+docker exec seafile-tailscale tailscale ip
+```
+
+### Disable/Enable Tailscale
+
+To temporarily disable Tailscale without removing the container:
+
+```bash
+# Stop Tailscale container
+docker compose stop tailscale
+
+# Start it again
+docker compose start tailscale
+```
+
+To completely disable Tailscale, set in `.env`:
+```bash
+TAILSCALE_ENABLED=false
+```
+
+Then restart:
+```bash
+docker compose up -d
+```
+
+### Tailscale Logs
+
+```bash
+docker compose logs -f tailscale
+```
+
 ## Configuration
+
+### How Tailscale Integration Works
+
+This setup uses the official Tailscale container (`ghcr.io/tailscale/tailscale`) as a sidecar that shares the network namespace with the Seafile container. This means:
+
+1. **The Tailscale container runs alongside Seafile** and handles all VPN connectivity
+2. **Seafile is accessible on your tailnet** at the hostname you specify (e.g., `http://seafile`)
+3. **No custom Dockerfile needed** - uses official images for both Seafile and Tailscale
+4. **Network namespace sharing** - Tailscale and Seafile share the same network stack
+5. **Works alongside Traefik** - You can access Seafile both via Traefik (public/HTTPS) and Tailscale (private/tailnet)
+
+The Tailscale container requires:
+- `CAP_ADD: NET_ADMIN, SYS_MODULE` - for VPN networking
+- `/dev/net/tun` device access - for tunnel interface
+- Persistent state directory - to maintain connection across restarts
 
 ### Traefik Integration
 
@@ -233,13 +320,20 @@ sudo chown -R 1027:100 /volume1/docker/seafile/
 
 See `.env.example` for all available configuration options.
 
-Key variables:
+### Key Seafile Variables:
 - `SEAFILE_SERVER_HOSTNAME` - Your domain name
 - `JWT_PRIVATE_KEY` - Random 32+ character string
 - `INIT_SEAFILE_MYSQL_ROOT_PASSWORD` - MySQL root password
 - `SEAFILE_MYSQL_DB_PASSWORD` - MySQL seafile user password
 - `INIT_SEAFILE_ADMIN_EMAIL` - Initial admin email
 - `INIT_SEAFILE_ADMIN_PASSWORD` - Initial admin password
+
+### Tailscale Variables:
+- `TAILSCALE_ENABLED` - Set to `true` to enable Tailscale integration
+- `TAILSCALE_AUTHKEY` - Auth key from https://login.tailscale.com/admin/settings/keys
+- `TAILSCALE_HOSTNAME` - Hostname for your Seafile container on the tailnet
+- `TAILSCALE_EXTRA_ARGS` - Additional Tailscale arguments (e.g., `--accept-routes`)
+- `TAILSCALE_STATE_DIR` - Directory to persist Tailscale state
 
 ## References
 
