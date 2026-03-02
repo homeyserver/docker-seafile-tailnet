@@ -41,8 +41,12 @@ This setup includes:
 
 3. **Create volume directories on your host:**
    ```bash
-   sudo mkdir -p /volume1/docker/seafile/{seafile-data,mysql,tailscale}
+   # Required directories
+   sudo mkdir -p /volume1/docker/seafile/{seafile-data,mysql}
    sudo chown -R 1027:100 /volume1/docker/seafile/
+   
+   # Optional: Only if using Tailscale
+   sudo mkdir -p /volume1/docker/seafile/tailscale
    ```
 
 4. **Deploy the stack** in Portainer
@@ -50,7 +54,8 @@ This setup includes:
 5. **Monitor logs** in Portainer to watch initialization
 
 **To disable Tailscale in Portainer:**
-- Simply stop the `seafile-tailscale` container or leave `TAILSCALE_AUTHKEY` empty
+- Navigate to Containers → `seafile-tailscale` → Stop
+- Or remove the Tailscale service from your stack before deploying
 
 ### Option 2: Using Docker Compose CLI
 
@@ -247,13 +252,11 @@ docker exec seafile-tailscale tailscale ip
 # Stop Tailscale
 docker compose stop tailscale
 
-# Start Tailscale
+# Start Tailscale  
 docker compose start tailscale
-
-# Or remove the auth key from .env and restart
 ```
 
-**To permanently disable:** Remove or comment out the `tailscale` service from `docker-compose.yml`.
+**To permanently disable:** Remove or comment out the `tailscale` service from `docker-compose.yml` before deploying.
 
 ### Tailscale Logs
 
