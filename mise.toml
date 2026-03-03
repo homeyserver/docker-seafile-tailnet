@@ -1,0 +1,3 @@
+[tools]
+docker-compose = "latest"
+podman = { version = "latest", matching = "podman-remote" }

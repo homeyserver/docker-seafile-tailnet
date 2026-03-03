@@ -81,9 +81,9 @@ services:
       - SEAFILE_AI_SERVER_URL=${SEAFILE_AI_SERVER_URL:-http://seafile-ai:8888}
       - SEAFILE_AI_SECRET_KEY=${JWT_PRIVATE_KEY:?Variable is not set or empty}
       - MD_FILE_COUNT_LIMIT=${MD_FILE_COUNT_LIMIT:-100000}
-    labels:
-      caddy: ${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}
-      caddy.reverse_proxy: "{{upstreams 80}}"
+    # labels:
+    #   caddy: ${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}
+    #   caddy.reverse_proxy: "{{upstreams 80}}"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
       interval: 30s
@@ -94,6 +94,27 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_started
+    networks:
+      - seafile-net
+
+  tailscale:
+    image: ghcr.io/tailscale/tailscale:v1.74.1
+    container_name: tailscale
+    restart: unless-stopped
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY:?Variable is not set or empty}
+      - TS_EXTRA_ARGS=--accept-dns=false --netfilter-mode=off
+      - TS_SERVE_CONFIG=/config/ts-serve.json
+      - TS_HOSTNAME=${TS_HOSTNAME:-seafile}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_AUTH_ONCE=true
+      - TS_USERSPACE=true
+    volumes:
+      - ./data/tailscale_var_lib:/var/lib/tailscale
+      - ./config:/config
+    depends_on:
+      seafile:
         condition: service_started
     networks:
       - seafile-net
